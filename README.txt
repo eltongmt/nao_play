@@ -1,96 +1,88 @@
-repo for working with nao 
-Goal is to have nao recognize objects using YOLO and then name them
-Can also have nano point 
+# info
+The goal of this repo is to program nao behavior using existing python behavior.
+[Active] Use YOLO model to recognize objects from nao's view. (image detection and 
+        text2speech logic)
+[Future] * Make nao turn head to detected object
+         * Make nao point to detected object  
 
-# installation 
-https://www.instructables.com/DJ-Darcy-Real-Time-Python-Music-Adaptation-Through/
+# Building qi from Binaries 
+reference:
+    https://www.instructables.com/DJ-Darcy-Real-Time-Python-Music-Adaptation-Through/
 
-Creating the Wheel:
+1. Get prereqs:
 
-Clone your libraries and install cmake
-git clone https://github.com/aldebaran/libqi-python.git
+    Clone your libraries and install cmake
+    git clone https://github.com/aldebaran/libqi-python.git
+    git clone https://github.com/aldebaran/libqi.git
 
-git clone https://github.com/aldebaran/libqi.git
+2. Setup conan
+    #cd into virtual environment folder
+    source [YOUR_VENV]/bin/activate
 
-brew install cmake
+    pip install --upgrade conan
 
-Setup conan
-#cd into virtual environment folder
+    # find c++ compiler 
+    conan profile detect
 
-source [YOUR_VENV]/bin/activate
+    # cache conan2 file in repo
+    conan export "PATH_TO_libqi" --version "4.0.1"
+    eg "$HOME/libqi"
 
-pip install --upgrade conan
 
-conan profile detect
+3. Create wheel: conan -> cmake 
+    cd libqi-python
+    conan install . --build=missing -s build_type=Debug
 
-conan export "$HOME/libqi" --version "4.0.1"
+    Cmake build
+    cmake --list-presets
 
-# [YOUR_PATH] is whatever directory you put libqi in (step 1)
+    #above line gets conan_string and string
 
-Conan Install
-cd libqi-python
+    cmake --preset [conan_string]
+    cmake --build --preset [conan_string]
 
-conan install . --build=missing -s build_type=Debug
+    deactivate
+    
+    # TEST
 
-Cmake build
-cmake --list-presets
+    source build/[string]/generators/conanrun.sh
+    ctest --preset [conan_string] --output-on-failure
+    source build/[string]/generators/deactivate_conanrun.sh
 
-#above line gets conan_string and string
+    # Install project
+    
+    cd .. #reactivate your venv
+    source [YOUR_VENV]/bin/activate
 
-cmake --preset [conan_string]
+    cd libqi-python
 
-cmake --build --preset [conan_string]
+    cmake --install build/[string] --component Module --prefix ~/my-libqi-python-install
 
-Test build (passed 79/80 tests?)
-deactivate
+    # Make wheel
+    conan install . --build=missing -c tools.build:skip_test=true
 
-source build/[string]/generators/conanrun.sh
+    pip install -U build
 
-ctest --preset [conan_string] --output-on-failure
+    cmake --list-presets
 
-source build/[string]/generators/deactivate_conanrun.sh
+    #gets conan_release_string & release_string
 
-Install project
-cd ..
+    python -m build --config-setting cmake.define.CMAKE_TOOLCHAIN_FILE=$PWD/build/[release_string]/generators/conan_toolchain.cmake
 
-#reactivate your venv
+3.   Install wheel
+    cd dist
 
-source [YOUR_VENV]/bin/activate
+    pip3 install qi-3.1.5-cp39-cp39-macosx_14_0_arm64.whl
 
-cd libqi-python
+    # Check install in python interpreter
 
-cmake --install build/[string] \
+    python3
 
---component Module --prefix ~/my-libqi-python-install
+    import qi
 
-Make wheel
-conan install . --build=missing -c tools.build:skip_test=true
+    # for ImportError: libboost_filesystem.so.1.83.0: 
+    # cannot open shared object file: No such file or directory
 
-pip install -U build
-
-cmake --list-presets
-
-#gets conan_release_string & release_string
-
-python -m build --config-setting cmake.define.CMAKE_TOOLCHAIN_FILE=$PWD/build/[release_string]/generators/conan_toolchain.cmake
-
-Install wheel
-cd dist
-
-pip3 install qi-3.1.5-cp39-cp39-macosx_14_0_arm64.whl
-
-Check install in python interpreter
-
-python3
-
-import qi
-
-exit()
-
-After Creating the Wheel:
-
-(Install these in the same virtual environment)
-
-pip install pyserial
-
-pip install qi
+    path_to_boost = find ~/.conan2 -name "libboost_filesystem.so.1.83.0"
+    
+    export LD_LIBRARY_PATH=path_to_boost:$LD_LIBRARY_PATH
