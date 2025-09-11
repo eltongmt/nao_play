@@ -8,7 +8,7 @@ The goal of this repo is to program nao behavior using existing python modules.
 *   Make nao turn head to detected object
 *   Make nao point to detected object  
 
-# Building qi from Binaries 
+# Building qi from Source 
 **(built using ubuntu 24.02 wsl)**
 reference:
     https://www.instructables.com/DJ-Darcy-Real-Time-Python-Music-Adaptation-Through/
