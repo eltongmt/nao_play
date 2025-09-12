@@ -1,8 +1,11 @@
 # info
 The goal of this repo is to program nao behavior using existing python modules.
-**[Active]** 
+**[Done]** 
 *   Use YOLO model to recognize objects from nao's view. (image detection and 
            text2speech logic)
+
+**[Active]** 
+*   Make ALMotion work without ALMath module 
 
 **[Future]**  
 *   Make nao turn head to detected object
