@@ -1,14 +1,17 @@
 # info
 The goal of this repo is to program nao behavior using existing python modules.
-**[Active]** 
+**[Done]** 
 *   Use YOLO model to recognize objects from nao's view. (image detection and 
            text2speech logic)
+
+**[Active]** 
+*   Make ALMotion work without ALMath module 
 
 **[Future]**  
 *   Make nao turn head to detected object
 *   Make nao point to detected object  
 
-# Building qi from Binaries 
+# Building qi from Source 
 **(built using ubuntu 24.02 wsl)**
 reference:
     https://www.instructables.com/DJ-Darcy-Real-Time-Python-Music-Adaptation-Through/
