@@ -35,9 +35,9 @@ def getNaoImage(videoService, videoClient):
 
     # Create a PIL Image from binary.
     img = Image.frombytes('RGB', (imageWidth, imageHeight), imageStream)
-    img_np = np.array(img)
+    
 
-    return img_np, t1 - t0
+    return img, t1 - t0
 
 def unsubscribeNaoCam(videoService):
     '''
@@ -62,14 +62,15 @@ def subscribeNaoCam(videoService, **kwargs):
         resolution = 160x120px (8)
         colorSpace = BGR (13)
     '''
-    defaultArgs = {'cameraIndex':0,'resolution':8,'colorSpace':13,'fps':5}
+    defaultArgs = {'cameraIndex':0,'resolution':2,'colorSpace':11,'fps':5}
     
     # set default params 
     for arg in defaultArgs.keys():
         if arg not in kwargs:
             kwargs[arg] = defaultArgs[arg]
 
-    videoClient = videoService.subscribeCamera('python_client', kwargs[0],kwargs[1],kwargs[2],kwargs[3])
+    videoClient = videoService.subscribeCamera('python_client', kwargs['cameraIndex'],kwargs['resolution'],
+						kwargs['colorSpace'],kwargs['fps'])
 
     return videoClient
 
@@ -80,7 +81,16 @@ def predictNaoImage(model, naoImage):
     Use yolo to detect objects 
     '''
 
-    results = model.predict(naoImage, verbose=False)
+    results = model.predict(naoImage, conf=0.50, verbose=False)
+    results = results[0]
+    names = results.names
 
-    return results.names, results.boxes
+    cls = results.boxes.cls
+    print(cls)
+
+    if cls.numel() > 0:
+        obj = names[cls[0].item()]
+    else:
+        obj = 0
+    return obj
     

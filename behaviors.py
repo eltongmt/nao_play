@@ -6,36 +6,38 @@ import keyboard
 def recognizeObjects(session):
     
     videoService = get_service(session, 'ALVideoDevice')
+    unsubscribeNaoCam(videoService)
     videoClient = subscribeNaoCam(videoService)
     textService = get_service(session, 'ALTextToSpeech')
 
-    model = get_objDetection_model('')
+    model = get_objDetection_model('/mnt/c/users/multimaster/P2_yolo_dataset.pt')
     valid = True
 
     naoSpeak(textService, 'Show me some objects!')
     while valid:
         img,_ = getNaoImage(videoService, videoClient)
+        #img.save('test4.jpg')
 
-        names,_ = predictNaoImage(model,img)
+        name = predictNaoImage(model,img)
+        print(name)
 
         # say detected object name
-        if len(names) > 0:
-            name = names[[0]]
+        if name:
             naoSpeak(textService, name)
         
+        time.sleep(1)
         # give window to break program 
-        while time.time() - startTime < 2:
-            startTime = time.time()
-            if keyboard.is_pressed('z'):
-                valid = False
-            time.sleep(0.01)
+        #while time.time() - startTime < 2:
+        #    if keyboard.is_pressed('z'):
+        #        valid = False
+        #    time.sleep(0.01)
     naoSpeak(textService, 'okay bye')
 
 
 
 if __name__ == "__main__":
     parser = set_parser()
-    parser.add_argument('--behavior', type='int',default=0)
+    parser.add_argument('--behavior', type=int,default=0)
 
     args = parser.parse_args()
     s = get_session(args)

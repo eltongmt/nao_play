@@ -48,20 +48,21 @@ def get_service(session, service_name):
     """
     validServices = ["ALTextToSpeech","ALVideoDevice","ALRobotPosture"]
 
-    if session not in validServices:
+    if service_name not in validServices:
         print(f"service : {service_name} is not supported.")
         print("Choose from: ")
         for validService in validServices:
             print(f" {validService}")
     try:
         service = session.service(service_name)
-        print(f"Sucessfully subscrbied to module {service_name}")
+        print(f"Sucessfully subscribed to module {service_name}")
     except Exception as e:
         print(e)
 
     return service
         
 def get_objDetection_model(modelPath, device=0):
-    model = YOLO(modelPath,device=device)
+    model = YOLO(modelPath)
+    model.to(device)
     
     return model
