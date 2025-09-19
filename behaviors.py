@@ -33,7 +33,8 @@ def recognizeObjects(session):
         #    time.sleep(0.01)
     naoSpeak(textService, 'okay bye')
 
-
+def moveHead():
+    pass
 
 if __name__ == "__main__":
     parser = set_parser()

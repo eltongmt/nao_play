@@ -96,7 +96,7 @@ def predictNaoImage(model, naoImage):
     return obj
     
 # -- ALMotion -- 
-def moveHead(motionProxy, wP):
+def calHeadPos(motionProxy, wP):
     effector = 'Head'
 
     timeList = [1]
