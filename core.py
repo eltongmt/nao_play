@@ -46,7 +46,7 @@ def get_service(session, service_name):
         ALMotion -> individual control 
     
     """
-    validServices = ["ALTextToSpeech","ALVideoDevice","ALRobotPosture"]
+    validServices = ["ALTextToSpeech","ALVideoDevice","ALRobotPosture", 'ALMotion']
 
     if service_name not in validServices:
         print(f"service : {service_name} is not supported.")
@@ -66,3 +66,5 @@ def get_objDetection_model(modelPath, device=0):
     model.to(device)
     
     return model
+
+def initTransformInterpolations(effectors, timeList, )

@@ -56,7 +56,8 @@ def unsubscribeNaoCam(videoService):
 
 def subscribeNaoCam(videoService, **kwargs):
     '''
-    Valid parameters can be found @ http://doc.aldebaran.com/2-1/family/robots/video_robot.html#cameraresolution-mt9m114
+    Valid parameters can be found @ http://doc.aldebaran.com/2-1/family/robots
+    /video_robot.html#cameraresolution-mt9m114
     Default:
         cameraIndex = top camera (0)
         resolution = 160x120px (8)
@@ -94,3 +95,12 @@ def predictNaoImage(model, naoImage):
         obj = 0
     return obj
     
+# -- ALMotion -- 
+def moveHead(motionProxy, wP):
+    effector = 'Head'
+
+    timeList = [1]
+    effector
+
+    
+
