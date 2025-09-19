@@ -1,5 +1,6 @@
 import qi
 from time import time
+from motion import *
 import numpy as np
 from PIL import Image
 
@@ -96,11 +97,24 @@ def predictNaoImage(model, naoImage):
     return obj
     
 # -- ALMotion -- 
-def calHeadPos(motionProxy, wP):
+    '''
+    Calculates the desired end head position based on Yaw and Pitch values 
+    '''
+def calHeadPos(motionProxy, wP, frame=FRAME_TORSO, useSensorValues=False):
     effector = 'Head'
 
-    timeList = [1]
-    effector
+    # @ is np.dot?????????
+    T = TransEye()
+    RotT = T @ RotZ(wP[1]) @ RotY(wP[0])
+    
+    currIf = motionProxy.getTransform(effector, frame, useSensorValues)
+    currIF = np.array(currIf).reshape(4,4)
+    targetIF = currIF @ RotT
+    targetIf = np.reshape(targetIF,-1)
+
+
+    return currIf, targetIf, [effector]
+
 
     
 

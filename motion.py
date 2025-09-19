@@ -16,14 +16,13 @@ AXIS_MASK_WZ = 32
 AXIS_MASK_W = AXIS_MASK_WX + AXIS_MASK_WY + AXIS_MASK_WZ 
 
 def TransEye():
-    R = np.eye(3)
-    p = np.array([0,0,0,1]).T
-    T = np.concatenate((R,p), axis=1)
-    return 
+    T = np.eye(4)
+    
+    return T
 
 def TransMatrix(p):
     T = TransEye()
-    T[-1,1:3] =  p
+    T[-1,:2] =  p
     return T
 
 def initRot(pRot):
@@ -57,8 +56,7 @@ def RotZ(pRotZ):
 
     return T
 
-
-
+""" 
 # Axis Mask
 # {POSITION 7, ROTATION 56, BOTH 63}
 eyeTransform = np.array([[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]])
@@ -89,3 +87,5 @@ pathList.append(targetPos)
 
 # should work...
 motionProxy.transformInterpolations(effectorList, frame, pathList, axisMask, timeList)
+
+"""

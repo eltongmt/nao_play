@@ -1,5 +1,6 @@
 from core import get_session, get_service, get_objDetection_model, set_parser
 from actions import *
+from motion import *
 import time
 import keyboard
 
@@ -33,18 +34,74 @@ def recognizeObjects(session):
         #    time.sleep(0.01)
     naoSpeak(textService, 'okay bye')
 
-def moveHead():
-    pass
+def turnHead(session):
+
+    pathList = []
+    frame = FRAME_TORSO
+    motionProxy = get_service(session, 'ALMotion')
+    motionProxy.wakeUp()
+
+    intIf, targetIf, effectorList = calHeadPos(motionProxy, [-0.2,0],frame, useSensorValues=True)
+    axisMask = AXIS_MASK_WY
+
+    timeList = [2,4]
+    pathList.append(targetIf.tolist())
+    pathList.append(intIf)
+
+    print(np.array(intIf).reshape(4,4))
+    print()
+    print(np.array(targetIf).reshape(4,4))
+
+    motionProxy.transformInterpolations(effectorList, frame, pathList, axisMask, timeList)
+    
+    motionProxy.setStiffnesses("Body", 0.0)
+
+
+def holdHead(session):
+    wP = [0.1,0]
+    motionProxy = get_service(session, 'ALMotion')
+    motionProxy.wakeUp()
+
+
+
+    frame = FRAME_ROBOT
+    effector = 'Head'
+
+    factionMaxSpeed = 0.5
+    axisMask = AXIS_MASK_WY
+
+    T = RotY(wP[0]).reshape(-1).tolist()
+
+    start = time.time()
+    while time.time() - start < 10:
+        print(time.time())
+        motionProxy.setTransforms(effector, frame, T, factionMaxSpeed, axisMask)
+        n = motionProxy.getTransform(effector, frame, True)
+        print(np.array(n).reshape(4,4))
+        time.sleep(0.01)
+
+    time.sleep(5)
+    motionProxy.setStiffnesses("Body", 0.0)
+
+
+
+
+    
+
 
 if __name__ == "__main__":
     parser = set_parser()
-    parser.add_argument('--behavior', type=int,default=0)
+    parser.add_argument('--behavior', type=int,default=1)
 
     args = parser.parse_args()
     s = get_session(args)
 
     if args.behavior == 0:
         recognizeObjects(s)
+    elif args.behavior == 1:
+        turnHead(s)
+    elif args.behavior == 2:
+        holdHead(s)
 
 
 

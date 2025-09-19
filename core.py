@@ -66,5 +66,3 @@ def get_objDetection_model(modelPath, device=0):
     model.to(device)
     
     return model
-
-def initTransformInterpolations(effectors, timeList, )
