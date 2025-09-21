@@ -4,6 +4,10 @@ from motion import *
 import time
 import keyboard
 
+
+def followObjects(session):
+    pass
+
 def recognizeObjects(session):
     
     videoService = get_service(session, 'ALVideoDevice')
@@ -34,7 +38,11 @@ def recognizeObjects(session):
         #    time.sleep(0.01)
     naoSpeak(textService, 'okay bye')
 
-def turnHead(session):
+def moveHead(session):
+    # need to take into account pitch and yaw combo constrains 
+    pass 
+
+def nodHead(session):
 
     pathList = []
     frame = FRAME_TORSO
@@ -48,21 +56,18 @@ def turnHead(session):
     pathList.append(targetIf.tolist())
     pathList.append(intIf)
 
-    print(np.array(intIf).reshape(4,4))
-    print()
-    print(np.array(targetIf).reshape(4,4))
-
     motionProxy.transformInterpolations(effectorList, frame, pathList, axisMask, timeList)
     
     motionProxy.setStiffnesses("Body", 0.0)
 
 
 def holdHead(session):
+    # figure this one out
+    # why is it not working 
+
     wP = [0.1,0]
     motionProxy = get_service(session, 'ALMotion')
     motionProxy.wakeUp()
-
-
 
     frame = FRAME_ROBOT
     effector = 'Head'
