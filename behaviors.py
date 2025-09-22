@@ -42,7 +42,7 @@ def moveHead(session):
     # need to take into account pitch and yaw combo constrains 
     pass 
 
-def nodHead(session):
+def turnHead(session):
 
     pathList = []
     frame = FRAME_TORSO
@@ -52,9 +52,9 @@ def nodHead(session):
     intIf, targetIf, effectorList = calHeadPos(motionProxy, [-0.2,0],frame, useSensorValues=True)
     axisMask = AXIS_MASK_WY
 
-    timeList = [2,4]
+    timeList = [2],#4]
     pathList.append(targetIf.tolist())
-    pathList.append(intIf)
+    #pathList.append(intIf)
 
     motionProxy.transformInterpolations(effectorList, frame, pathList, axisMask, timeList)
     
@@ -65,7 +65,7 @@ def holdHead(session):
     # figure this one out
     # why is it not working 
 
-    wP = [0.1,0]
+    wP = [0.2,0]
     motionProxy = get_service(session, 'ALMotion')
     motionProxy.wakeUp()
 
@@ -76,22 +76,21 @@ def holdHead(session):
     axisMask = AXIS_MASK_WY
 
     T = RotY(wP[0]).reshape(-1).tolist()
+    Tf = RotY(-wP[0]).reshape(-1).tolist()
 
-    start = time.time()
-    while time.time() - start < 10:
-        print(time.time())
-        motionProxy.setTransforms(effector, frame, T, factionMaxSpeed, axisMask)
-        n = motionProxy.getTransform(effector, frame, True)
-        print(np.array(n).reshape(4,4))
-        time.sleep(0.01)
+    motionProxy.setTransforms(effector, frame, T, factionMaxSpeed, axisMask)
+    time.sleep(0.01)
+    #start = time.time()
+    #while time.time() - start < 10:
+    #    print(time.time())
+    #    motionProxy.setTransforms(effector, frame, T, factionMaxSpeed, axisMask)
+    #    n = motionProxy.getTransform(effector, frame, False)
+    #    print(np.array(n).reshape(4,4))
+    motionProxy.setTransforms(effector, frame, Tf, factionMaxSpeed, axisMask)
 
-    time.sleep(5)
+    time.sleep(0.01)
     motionProxy.setStiffnesses("Body", 0.0)
 
-
-
-
-    
 
 
 if __name__ == "__main__":
