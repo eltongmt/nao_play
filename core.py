@@ -46,7 +46,8 @@ def get_service(session, service_name):
         ALMotion -> individual control 
     
     """
-    validServices = ["ALTextToSpeech","ALVideoDevice","ALRobotPosture", 'ALMotion']
+    validServices = ['ALTextToSpeech','ALVideoDevice','ALRobotPosture', 'ALMotion',
+                     'ALRobotPosture', 'ALSystem']
 
     if service_name not in validServices:
         print(f"service : {service_name} is not supported.")

@@ -83,18 +83,21 @@ def predictNaoImage(model, naoImage):
     Use yolo to detect objects 
     '''
 
-    results = model.predict(naoImage, conf=0.50, verbose=False)
+    results = model.predict(naoImage, conf=0.80, verbose=False)
     results = results[0]
     names = results.names
+    boxes = results.boxes.xywhn
+    
+    clss = results.boxes.cls
 
-    cls = results.boxes.cls
-    print(cls)
-
-    if cls.numel() > 0:
-        obj = names[cls[0].item()]
+    if clss.numel() > 0:
+        obj = names[clss[0].item()]
+        bbox = boxes[0].tolist()
     else:
-        obj = 0
-    return obj
+        obj = None
+        bbox = None
+
+    return obj, bbox
     
 # -- ALMotion -- 
     '''

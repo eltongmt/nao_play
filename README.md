@@ -93,4 +93,9 @@ reference:
     for ImportError: libboost_filesystem.so.1.83.0: cannot open shared object file: No such file or directory
 
         path_to_boost = find ~/.conan2 -name "libboost_filesystem.so.1.83.0"
-        export LD_LIBRARY_PATH=path_to_boost:$LD_LIBRARY_PATH
+
+    get something like _/home/multimaster/.conan2/p/b/boostc18ba61c1e30c/p/lib_ then
+        
+        echo 'export LD_LIBRARY_PATH=/home/multimaster/.conan2/p/b/boostc18ba61c1e30c/p/lib:$LD_LIBRARY_PATH' >> ~/.bashrc
+
+        
