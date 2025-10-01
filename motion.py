@@ -22,7 +22,7 @@ def TransEye():
 
 def TransMatrix(p):
     T = TransEye()
-    T[-1,:2] =  p
+    T[:3,-1] =  p
     return T
 
 def initRot(pRot):

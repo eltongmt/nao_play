@@ -11,12 +11,59 @@ def turnNaoOFF(session):
 
     systemProxy.shutdown()
 
+def defaultVals(session):
+    postureService = get_service(session, 'ALRobotPosture')
+    motionProxy = get_service(session, 'ALMotion')
+    
+    postureService.goToPosture("Stand",0.2)
+    config = motionProxy.getRobotConfig()
+    print(config)
+
+    useSensorValues = False
+    effectorList = ['Head']
+    frame = FRAME_TORSO
+    currentPos = motionProxy.getTransform(effectorList[0], frame, useSensorValues)
+    print(np.array(currentPos).reshape(4,4))
+    
+
 def restNao(session):
     postureService = get_service(session, 'ALRobotPosture')
     motionProxy = get_service(session, 'ALMotion')
 
     postureService.goToPosture("Sit",0.5)
     motionProxy.setStiffnesses("Body", 0.0)
+
+
+def point(session):
+
+    effectorList = ['LArm']
+    frame = FRAME_TORSO
+    useSensorValues = False # should this be false? 
+
+    pathList = []
+    frame = FRAME_TORSO
+    motionProxy = get_service(session, 'ALMotion')
+    motionProxy.wakeUp()
+
+    currentPos = motionProxy.getTransform(effectorList[0], frame, useSensorValues)
+    currentPos = np.array(currentPos).reshape(4,4)
+
+    T = TransMatrix([0,0,0.05])
+    print(currentPos)
+    print(T)
+    print(currentPos @ T)
+    print(T @ currentPos)
+    targetIf = T @ currentPos
+    
+    axisMask = AXIS_MASK_V
+
+    timeList = [10, 20]
+    pathList.append(targetIf.reshape(-1).tolist())
+    pathList.append(currentPos.reshape(-1).tolist())
+
+    motionProxy.transformInterpolations(effectorList, frame, pathList, axisMask, timeList)
+    motionProxy.setStiffnesses("Body", 0.0)
+
 
 def followObjects(session):
 
@@ -52,24 +99,20 @@ def followObjects(session):
             wP = videoService.getAngularPositionFromImagePosition(0, [x,y])
 
             T = TransEye()
-            RotT = T @ RotZ(wP[1]) @ RotY(wP[0])
+            RotT = T @ RotZ(wP[1]) @ RotY(wP[0]-0.01)
             RotTv = RotT.reshape(-1).tolist()
 
-            motionProxy.setTransforms(effector, frame, RotTv, factionMaxSpeed, axisMask)
+            # could do something like like while the effector is not in position 
+            # keep sleeping
+            motionProxy.getTransforms(effector, frame, RotTv, factionMaxSpeed, axisMask)
 
             time.sleep(5)
         else:
             print(None)
         print()
         
-
         #motionProxy.setStiffnesses("Body", 0.0)
     motionProxy.rest()
-
-
-
-
-
 
 def recognizeObjects(session):
     
@@ -107,15 +150,16 @@ def turnHead(session):
     motionProxy = get_service(session, 'ALMotion')
     motionProxy.wakeUp()
 
-    intIf, targetIf, effectorList = calHeadPos(motionProxy, [-0.2,0],frame, useSensorValues=True)
+    intIf, targetIf, effectorList = calHeadPos(motionProxy,[0.1,0],frame, useSensorValues=True)
     axisMask = AXIS_MASK_WY
 
-    timeList = [2],#4]
+    timeList = [2, 4]
     pathList.append(targetIf.tolist())
-    #pathList.append(intIf)
+    pathList.append(intIf)
 
+    print(np.array(intIf).reshape(4,4))
     motionProxy.transformInterpolations(effectorList, frame, pathList, axisMask, timeList)
-    
+
     motionProxy.setStiffnesses("Body", 0.0)
 
 
@@ -123,7 +167,7 @@ def holdHead(session):
     # figure this one out
     # why is it not working 
 
-    wP = [0.2,0]
+    wP = [0.1,0]
     motionProxy = get_service(session, 'ALMotion')
     motionProxy.wakeUp()
 
@@ -133,17 +177,20 @@ def holdHead(session):
     factionMaxSpeed = 0.5
     axisMask = AXIS_MASK_WY
 
-    T = RotY(wP[0]).reshape(-1).tolist()
-    Tf = RotY(-wP[0]).reshape(-1).tolist()
+    T = RotY(wP[0])
+    Tf = RotY(-wP[0])
 
-    motionProxy.setTransforms(effector, frame, T, factionMaxSpeed, axisMask)
-    time.sleep(0.01)
+    print(T)
+    print(Tf)
+    #otionProxy.setTransforms(effector, frame, T, factionMaxSpeed, axisMask)
+    
+    
+    time.sleep(5)
 
-    motionProxy.setTransforms(effector, frame, Tf, factionMaxSpeed, axisMask)
+    #motionProxy.setTransforms(effector, frame, Tf, factionMaxSpeed, axisMask)
 
-    time.sleep(0.01)
+    #time.sleep(0.01)
     motionProxy.setStiffnesses("Body", 0.0)
-
 
 
 if __name__ == "__main__":
@@ -164,7 +211,10 @@ if __name__ == "__main__":
     elif args.behavior == 3:
         followObjects(s)
     elif args.behavior == 4:
-        resetNao(s, False)
+        restNao(s)
+    elif args.behavior == 5:
+        #point(s)
+        defaultVals(s)
     if args.OFF:
         turnNaoOFF(s)
         

@@ -113,6 +113,8 @@ def calHeadPos(motionProxy, wP, frame=FRAME_TORSO, useSensorValues=False):
     currIf = motionProxy.getTransform(effector, frame, useSensorValues)
     currIF = np.array(currIf).reshape(4,4)
     targetIF = currIF @ RotT
+    print(RotT @ currIF)
+    print(currIF @ RotT)
     targetIf = np.reshape(targetIF,-1)
 
 
