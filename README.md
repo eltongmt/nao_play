@@ -3,13 +3,13 @@ The goal of this repo is to program nao behavior using existing python modules.
 **[Done]** 
 *   Use YOLO model to recognize objects from nao's view
 *   Make ALMotion work without ALMath module
+*   Move head and arms using setTransforms & TransformsInterpolations
+*   Nao can look to detected object 
 
 **[Active]** 
-*   Move head using setTransformations
-*   Move arms to point straight 
+*   Debug setTransforms 
 
 **[Future]**  
-*   Make nao turn head to detected object
 *   Make nao point to detected object  
 
 # Building qi from Source 
