@@ -40,14 +40,13 @@ def get_service(session, service_name):
         supported services:
         ALTextToSpeech -> produce speech
         ALVideoDevice  -> get images
-        ALRobotPosture -> whole body preset translation 
-
-        Working on (might not happen)
-        ALMotion -> individual control 
-    
+        ALRobotPosture -> whole body preset translation
+        ALmotion -> chain control
+        ALSystem -> turn off robot, etc    
     """
+
     validServices = ['ALTextToSpeech','ALVideoDevice','ALRobotPosture', 'ALMotion',
-                     'ALRobotPosture', 'ALSystem']
+                    'ALSystem']
 
     if service_name not in validServices:
         print(f"service : {service_name} is not supported.")
@@ -62,7 +61,11 @@ def get_service(session, service_name):
 
     return service
         
+        
 def get_objDetection_model(modelPath, device=0):
+    '''
+    initialize yolo model
+    '''
     model = YOLO(modelPath)
     model.to(device)
     

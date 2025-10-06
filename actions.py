@@ -90,6 +90,8 @@ def predictNaoImage(model, naoImage):
     
     clss = results.boxes.cls
 
+    #TO DO: change to return the biggest item if multiple 
+    # getBiggestObj
     if clss.numel() > 0:
         obj = names[clss[0].item()]
         bbox = boxes[0].tolist()
@@ -106,19 +108,15 @@ def predictNaoImage(model, naoImage):
 def calHeadPos(motionProxy, wP, frame=FRAME_TORSO, useSensorValues=False):
     effector = 'Head'
 
-    # @ is np.dot?????????
-    T = TransEye()
-    RotT = T @ RotZ(wP[1]) @ RotY(wP[0])
+    cP = motionProxy.getTransform(effector, frame, useSensorValues)
+    cP = Transform(cP)
     
-    currIf = motionProxy.getTransform(effector, frame, useSensorValues)
-    currIF = np.array(currIf).reshape(4,4)
-    targetIF = currIF @ RotT
-    print(RotT @ currIF)
-    print(currIF @ RotT)
-    targetIf = np.reshape(targetIF,-1)
+    sV  = np.concatenate((np.zeros(3), np.array(wP)))
+    H = TransRot(sV)
+    
+    tP = cP @ H
 
-
-    return currIf, targetIf, [effector]
+    return  cP, tP, [effector]
 
 
     

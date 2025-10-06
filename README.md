@@ -1,5 +1,6 @@
 # info
 The goal of this repo is to program nao behavior using existing python modules.
+
 **[Done]** 
 *   Use YOLO model to recognize objects from nao's view
 *   Make ALMotion work without ALMath module
@@ -10,7 +11,8 @@ The goal of this repo is to program nao behavior using existing python modules.
 *   Debug setTransforms 
 
 **[Future]**  
-*   Make nao point to detected object  
+*   Make nao point to detected object
+*   clean up behaviors.py 
 
 # Building qi from Source 
 **(built using ubuntu 24.02 wsl)**
