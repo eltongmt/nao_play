@@ -151,7 +151,7 @@ class Transform:
             self.vector = list(self.matrix.reshape(-1))
         elif isinstance(T, list):
             self.vector = T
-            self.matirx = np.array(self.vector).reshape(4,4) 
+            self.matrix = np.array(self.vector).reshape(4,4) 
         else:
             raise Exception(f'type{T} is not a valid data type')
         
@@ -170,18 +170,21 @@ def isArraysClose(A, B):
     '''
 
     arrays = [A,B]
+    cop_arrays = [0, 0]
     shapes = [0,0]
 
-    for i in len(arrays):
+    for i in range(len(arrays)):
         X = arrays[i]
 
         if isinstance(X, Transform):
             X = X.matrix.reshape(-1)
         elif not isinstance(X, np.ndarray):
-            X = np.array(A).reshape(-1)
+            X = np.array(X).reshape(-1)
+        
         arrays[i] = X
         shapes[i] = X.shape[0]
 
+    print(arrays)
     values = np.isclose(arrays[0], arrays[1])
     trueValues = sum(values)
 
@@ -192,9 +195,11 @@ def waitForAngles(A, motionProxy, names, useSensors):
     '''
     wait for setMotion call to finish (since set is non-blocking)
     '''
+    print(A)
     while True:
         B = motionProxy.getAngles(names, useSensors)
 
         if isArraysClose(A, B):
+            print(A, B)
             break
         time.sleep(0.05)

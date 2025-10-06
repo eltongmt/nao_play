@@ -27,32 +27,38 @@ def turnNaoOFF(session):
     systemProxy.shutdown()
 
 
-def moveHead(session, wP, comeBack):
+def setStiffnesses(session, name, stiffnesse):
+    '''
+    use to relax part of nao
+    '''
+    motionProxy = get_service(session, 'ALMotion')
+    motionProxy.setStiffnesses(name, stiffnesse)
+
+
+def moveHead(session, wPt, fractionMaxSpeed, comeBack):
     '''
     Rotate the head around the desired Z(yaw) and Y(pitch) axis.
     With the option to return the head to its initial rotation 
     '''
 
     motionProxy = get_service(session, 'ALMotion')
-    motionProxy.wakeup()
+    motionProxy.setStiffnesses('Head', 1)
 
     names = ['HeadYaw','HeadPitch']
-    wPt = wP
-    wPs = motionProxy.getAngle(names, useSensors)
-    fractionMaxSpeed = 0.5
     useSensors = False
+    wPs = motionProxy.getAngles(names, useSensors)
 
     # go to first position 
     motionProxy.setAngles(names, wPt, fractionMaxSpeed)
-    waitForAngles(motionProxy, wPt, names, useSensors)
+    waitForAngles(wPt, motionProxy, names, useSensors)
    
    # if comeBack return to first position
     if comeBack:
         motionProxy.setAngles(names, wPs, fractionMaxSpeed)
-        waitForAngles(motionProxy, wPs, names, useSensors)
+        waitForAngles(wPs, motionProxy, names, useSensors)
 
     # turn off stiffnesse
-    motionProxy.setStiffnesses("Body", 0.0)
+    motionProxy.setStiffnesses('Head', 0.0)
 
 
 ### Development / debugging 
@@ -212,7 +218,11 @@ if __name__ == "__main__":
     s = get_session(args)
 
     if args.behavior == 0:
-        recognizeObjects(s)
+        wP = [-0.1, -0.2]
+        comeBack = True
+        fractionMaxSpeed = 0.2
+
+        moveHead(s, wP, comeBack, fractionMaxSpeed)
     elif args.behavior == 1:
         turnHead(s)
     elif args.behavior == 2:
@@ -223,7 +233,7 @@ if __name__ == "__main__":
         restNao(s)
     elif args.behavior == 5:
         #point(s)
-        defaultVals(s)
+        setStiffnesses(s, 'Head', 0)
     if args.OFF:
         turnNaoOFF(s)
         
