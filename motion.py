@@ -1,4 +1,5 @@
 import numpy as np
+import time
 
 # frame constants 
 FRAME_TORSO = 0
@@ -138,14 +139,16 @@ def TransRot(sV):
 
 class Transform:
     """
-    Define transform class to easily go from
-    (4,4) for operations to (,16) for actual
-    processing 
+    Class to manipulate and perform operations on 
+    vectors of data type list (returned from motionProxy)
+    
+    For Transforms to easily go from (4,4) for numpy operations 
+    to (,16) to feed back to motionProxy
     """
     def __init__(self, T):
         if isinstance(T, np.ndarray):
             self.matrix = T
-            self.vector = self.matrix.reshape(-1)
+            self.vector = list(self.matrix.reshape(-1))
         elif isinstance(T, list):
             self.vector = T
             self.matirx = np.array(self.vector).reshape(4,4) 
@@ -160,4 +163,38 @@ class Transform:
         else:
             raise Exception(f'matmul is not defined for transform and {type(B)}')
     
+
+def isArraysClose(A, B):
+    '''
+    compare if two arrays of size n are close element wise within a tolerance
+    '''
+
+    arrays = [A,B]
+    shapes = [0,0]
+
+    for i in len(arrays):
+        X = arrays[i]
+
+        if isinstance(X, Transform):
+            X = X.matrix.reshape(-1)
+        elif not isinstance(X, np.ndarray):
+            X = np.array(A).reshape(-1)
+        arrays[i] = X
+        shapes[i] = X.shape[0]
+
+    values = np.isclose(arrays[0], arrays[1])
+    trueValues = sum(values)
+
+    return trueValues == shapes[0]
     
+
+def waitForAngles(A, motionProxy, names, useSensors):
+    '''
+    wait for setMotion call to finish (since set is non-blocking)
+    '''
+    while True:
+        B = motionProxy.getAngles(names, useSensors)
+
+        if isArraysClose(A, B):
+            break
+        time.sleep(0.05)

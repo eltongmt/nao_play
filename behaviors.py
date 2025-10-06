@@ -4,29 +4,11 @@ from motion import *
 import time
 import cv2
 
-def turnNaoOFF(session):
-    motionProxy = get_service(session, 'ALMotion')
-    systemProxy = get_service(session, 'ALSystem')
-    motionProxy.rest()
-
-    systemProxy.shutdown()
-
-def defaultVals(session):
-    postureService = get_service(session, 'ALRobotPosture')
-    motionProxy = get_service(session, 'ALMotion')
-    
-    postureService.goToPosture("Stand",0.2)
-    config = motionProxy.getRobotConfig()
-    print(config)
-
-    useSensorValues = False
-    effectorList = ['Head']
-    frame = FRAME_TORSO
-    currentPos = motionProxy.getTransform(effectorList[0], frame, useSensorValues)
-    print(np.array(currentPos).reshape(4,4))
-    
-
+## finished behaviors
 def restNao(session):
+    '''
+    place nao in rest postion (3 point contact with floor) 
+    '''
     postureService = get_service(session, 'ALRobotPosture')
     motionProxy = get_service(session, 'ALMotion')
 
@@ -34,6 +16,46 @@ def restNao(session):
     motionProxy.setStiffnesses("Body", 0.0)
 
 
+def turnNaoOFF(session):
+    '''
+    move nao to a safe rest postion then turn off
+    '''
+    motionProxy = get_service(session, 'ALMotion')
+    systemProxy = get_service(session, 'ALSystem')
+    motionProxy.rest()
+
+    systemProxy.shutdown()
+
+
+def moveHead(session, wP, comeBack):
+    '''
+    Rotate the head around the desired Z(yaw) and Y(pitch) axis.
+    With the option to return the head to its initial rotation 
+    '''
+
+    motionProxy = get_service(session, 'ALMotion')
+    motionProxy.wakeup()
+
+    names = ['HeadYaw','HeadPitch']
+    wPt = wP
+    wPs = motionProxy.getAngle(names, useSensors)
+    fractionMaxSpeed = 0.5
+    useSensors = False
+
+    # go to first position 
+    motionProxy.setAngles(names, wPt, fractionMaxSpeed)
+    waitForAngles(motionProxy, wPt, names, useSensors)
+   
+   # if comeBack return to first position
+    if comeBack:
+        motionProxy.setAngles(names, wPs, fractionMaxSpeed)
+        waitForAngles(motionProxy, wPs, names, useSensors)
+
+    # turn off stiffnesse
+    motionProxy.setStiffnesses("Body", 0.0)
+
+
+### Development / debugging 
 def point(session):
 
     effectorList = ['LArm']
@@ -84,6 +106,7 @@ def followObjects(session):
     while True:
         img,_ = getNaoImage(videoService, videoClient)
     
+
         obj, xywhn = predictNaoImage(model, img)
 
         if obj is not None:
@@ -139,9 +162,6 @@ def recognizeObjects(session):
   
     naoSpeak(textService, 'okay bye')
 
-def moveHead(session):
-    # need to take into account pitch and yaw combo constrains 
-    pass 
 
 def turnHead(session):
 
@@ -163,34 +183,23 @@ def turnHead(session):
     motionProxy.setStiffnesses("Body", 0.0)
 
 
-def holdHead(session):
-    # figure this one out
-    # why is it not working 
+def defaultVals(session):
+    chains = ["Head", "LArm", "LLeg", "RLeg", "RArm"]
 
-    wP = [0.1,0]
+    postureService = get_service(session, 'ALRobotPosture')
     motionProxy = get_service(session, 'ALMotion')
-    motionProxy.wakeUp()
-
-    frame = FRAME_ROBOT
-    effector = 'Head'
-
-    factionMaxSpeed = 0.5
-    axisMask = AXIS_MASK_WY
-
-    T = RotY(wP[0])
-    Tf = RotY(-wP[0])
-
-    print(T)
-    print(Tf)
-    #otionProxy.setTransforms(effector, frame, T, factionMaxSpeed, axisMask)
     
-    
-    time.sleep(5)
+    postureService.goToPosture("Stand",0.2)
+    config = motionProxy.getRobotConfig()
+    print(config)
 
-    #motionProxy.setTransforms(effector, frame, Tf, factionMaxSpeed, axisMask)
+    useSensorValues = False
+    frame = FRAME_TORSO
 
-    #time.sleep(0.01)
-    motionProxy.setStiffnesses("Body", 0.0)
+    for chain in chains:
+        cP = motionProxy.getTransform(chain, frame, useSensorValues)
+        cP = Transform(cP)
+        print(f'home configuration for {chain}\n: {cP.matrix}')
 
 
 if __name__ == "__main__":
