@@ -168,33 +168,74 @@ def isArraysClose(A, B):
     '''
     compare if two arrays of size n are close element wise within a tolerance
     '''
-
     arrays = [A,B]
-    shapes = [0,0]
 
-    for i in len(arrays):
+    for i in range(len(arrays)):
         X = arrays[i]
 
         if isinstance(X, Transform):
             X = X.matrix.reshape(-1)
         elif not isinstance(X, np.ndarray):
-            X = np.array(A).reshape(-1)
+            X = np.array(X).reshape(-1)
+        elif isinstance(X, np.ndarray):
+            X = X.reshape(-1)
+
         arrays[i] = X
-        shapes[i] = X.shape[0]
 
-    values = np.isclose(arrays[0], arrays[1])
-    trueValues = sum(values)
+    values = np.allclose(arrays[0], arrays[1], atol=0.01)
 
-    return trueValues == shapes[0]
+    return values
     
 
 def waitForAngles(A, motionProxy, names, useSensors):
     '''
     wait for setMotion call to finish (since set is non-blocking)
     '''
+    prevB = motionProxy.getAngels(names, useSensors)
+    breakCount = 0
+
     while True:
         B = motionProxy.getAngles(names, useSensors)
 
         if isArraysClose(A, B):
             break
         time.sleep(0.05)
+
+        # instances where the robot is struck
+        # trying to get to a position that is 
+        # not possible 
+        diffB = B - prevB
+        prevB = B
+
+        if diffB == 0:
+            breakCount += 1
+
+        if breakCount == 4:
+            break
+
+# note need to fix this function its dedundant for testing 
+def waitForTransform(A, motionProxy, chainName, frame, useSensors):
+    '''
+    wait for setMotion call to finish (since set is non-blocking)
+    '''
+    prevB = motionProxy.getTransform(chainName, frame, useSensors)
+    breakCount = 0
+
+    while True:
+        B = motionProxy.getTransform(chainName, frame, useSensors)
+
+        if isArraysClose(A, B):
+            break
+        time.sleep(0.05)
+
+        # instances where the robot is struck
+        # trying to get to a position that is 
+        # not possible 
+        diffB = B - prevB
+        prevB = B
+
+        if diffB == 0:
+            breakCount += 1
+
+        if breakCount == 4:
+            break

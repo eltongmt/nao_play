@@ -34,7 +34,7 @@ def moveHead(session, wP, comeBack):
     '''
 
     motionProxy = get_service(session, 'ALMotion')
-    motionProxy.wakeup()
+    motionProxy.wakeUp()
 
     names = ['HeadYaw','HeadPitch']
     wPt = wP
@@ -53,6 +53,24 @@ def moveHead(session, wP, comeBack):
 
     # turn off stiffnesse
     motionProxy.setStiffnesses("Body", 0.0)
+
+def extendArm(session, comeback):
+    ## TESTING METHOD ##
+    motionProxy = get_service(session, 'ALMotion')
+    motionProxy.wakeUp()
+
+    chainName = "LArm"
+    frame     = FRAME_TORSO
+    useSensors = False
+    fractionMaxSpeed = 0.2
+    axisMask = AXIS_MASK_WZ
+    
+    ts = motionProxy.getTransform(chainName, frame, useSensors)
+    ts = Transform(ts)
+    tt = ts @ TransRot([0,0,-np.pi/2,0,0,0])
+
+    motionProxy.setTransforms(chainName, frame, tt, fractionMaxSpeed, axisMask)
+    waitForTransform(tt, motionProxy, chainName, frame, useSensors)
 
 
 ### Development / debugging 
