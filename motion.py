@@ -151,7 +151,7 @@ class Transform:
             self.vector = list(self.matrix.reshape(-1))
         elif isinstance(T, list):
             self.vector = T
-            self.matirx = np.array(self.vector).reshape(4,4) 
+            self.matrix = np.array(self.vector).reshape(4,4) 
         else:
             raise Exception(f'type{T} is not a valid data type')
         
@@ -169,7 +169,10 @@ def isArraysClose(A, B):
     compare if two arrays of size n are close element wise within a tolerance
     '''
     arrays = [A,B]
+    cop_arrays = [0, 0]
+    shapes = [0,0]
 
+    for i in range(len(arrays)):
     for i in range(len(arrays)):
         X = arrays[i]
 
@@ -178,11 +181,13 @@ def isArraysClose(A, B):
         elif not isinstance(X, np.ndarray):
             X = np.array(X).reshape(-1)
         elif isinstance(X, np.ndarray):
-            X = X.reshape(-1)
-
+            X = X.reshape(-1)        
         arrays[i] = X
 
     values = np.allclose(arrays[0], arrays[1], atol=0.01)
+    print(arrays)
+    values = np.isclose(arrays[0], arrays[1])
+    trueValues = sum(values)
 
     return values
     
@@ -191,6 +196,7 @@ def waitForAngles(A, motionProxy, names, useSensors):
     '''
     wait for setMotion call to finish (since set is non-blocking)
     '''
+    print(A)
     prevB = motionProxy.getAngels(names, useSensors)
     breakCount = 0
 
@@ -198,6 +204,7 @@ def waitForAngles(A, motionProxy, names, useSensors):
         B = motionProxy.getAngles(names, useSensors)
 
         if isArraysClose(A, B):
+            print(A, B)
             break
         time.sleep(0.05)
 
@@ -227,7 +234,7 @@ def waitForTransform(A, motionProxy, chainName, frame, useSensors):
         if isArraysClose(A, B):
             break
         time.sleep(0.05)
-
+       
         # instances where the robot is struck
         # trying to get to a position that is 
         # not possible 
