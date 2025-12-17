@@ -4,16 +4,18 @@ from motion import *
 import time
 import cv2
 
+from sshkeyboard import listen_keyboard_manual
+import asyncio
+
 ## finished behaviors
 def restNao(session):
     '''
     place nao in rest postion (3 point contact with floor) 
     '''
     postureService = get_service(session, 'ALRobotPosture')
-    motionProxy = get_service(session, 'ALMotion')
-
     postureService.goToPosture("Sit",0.5)
-    motionProxy.setStiffnesses("Body", 0.0)
+
+    setStiffnesses(session, "Body", 0.0)
 
 
 def turnNaoOFF(session):
@@ -37,52 +39,146 @@ def setStiffnesses(session, name, stiffnesse):
 
 def moveHead(session, wPt, fractionMaxSpeed, comeBack):
     '''
-    Rotate the head around the desired Z(yaw) and Y(pitch) axis.
+    Rotate the head around the desired Y(pitch) and Z(yaw) axis.
     With the option to return the head to its initial rotation 
     '''
+    useSensors = False
+    names = ['HeadYaw','HeadPitch']
 
     motionProxy = get_service(session, 'ALMotion')
-    motionProxy.setStiffnesses('Head', 1)
-
-    names = ['HeadYaw','HeadPitch']
-    useSensors = False
     wPs = motionProxy.getAngles(names, useSensors)
-
+    wPs = [round(x, 5) for x in wPs]
+    
+    # motionProxy.setStiffnesses(names , [1 ,1])
+    
     # go to first position 
     motionProxy.setAngles(names, wPt, fractionMaxSpeed)
-    waitForAngles(wPt, motionProxy, names, useSensors)
-   
-   # if comeBack return to first position
-    if comeBack:
+    #waitForAngles(wPt, motionProxy, names, useSensors)
+ 
+       # if comeBack return to first position
+    if comeBack:  
         motionProxy.setAngles(names, wPs, fractionMaxSpeed)
         waitForAngles(wPs, motionProxy, names, useSensors)
 
     # turn off stiffnesse
-    motionProxy.setStiffnesses('Head', 0.0)
+    # motionProxy.setStiffnesses(names, [0,0])
 
-def extendArm(session, comeback):
-    ## TESTING METHOD ##
+# break down into two functions:
+#  one get image and predicts
+#  second one takes image and turn head 
+
+def followObjects(session):
+    ledGroup = 'FaceLeds'
+    ledService = get_service(session,'ALLeds')
+
+    videoService = get_service(session, 'ALVideoDevice')
+    unsubscribeNaoCam(videoService)
+    videoClient = subscribeNaoCam(videoService)
+
     motionProxy = get_service(session, 'ALMotion')
     motionProxy.wakeUp()
 
-    chainName = "LArm"
+    # old method
+    #   frame = FRAME_ROBOT
+    #   effector = 'Head'
+    #   axisMask = AXIS_MASK_WY + AXIS_MASK_WZ
+    fractionMaxSpeed = 0.1
+    img,_ = getNaoImage(videoService, videoClient)
+    img = np.array(img)
+    # write to video
+    H, W, _ = img.shape
+    fps=15
+    codec="mp4v"
+    output_path = 'output_face.mp4'
+
+    fourcc = cv2.VideoWriter_fourcc(*codec)
+    out = cv2.VideoWriter(output_path, fourcc, fps, (W, H))
+
+    model = get_objDetection_model('/mnt/c/users/multimaster/P2_yolo_dataset.pt')
+    ledService.fadeRGB(ledGroup,'red',0.01)
+    font = cv2.FONT_HERSHEY_SIMPLEX
+
+
+    useSensors = False
+    names = ['HeadYaw','HeadPitch']
+
+    while True:
+        try:
+            img,_ = getNaoImage(videoService, videoClient)
+            obj, boxes= predictNaoImage(model, img)
+
+            img = np.array(img)
+            img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+
+            if obj is not None:
+                ledService.fadeRGB(ledGroup,'blue',0.01)
+                xywhn = boxes.xywhn[0].tolist()
+                xyxy = boxes.xyxy[0].tolist()
+                x,y = xywhn[0:2]
+
+                ### ADD FACE AND CHANGE COLOR OF BUTTON WHEN RECOGNIZE
+                ### ALSO CHANGE TO getTransforms 
+
+                # use default camera index unless it is defined when subscribing
+                wPt = videoService.getAngularPositionFromImagePosition(0, [round(x,2),round(y,2)])
+                B = motionProxy.getAngles(names, useSensors)
+                info = f'{x:.2f},{y:.2f},{obj},{wPt[0]:.2f},{wPt[1]:.2f},{B[0]:.2f},{B[1]:.2f}'
+                print(info)
+
+                moveHead(session, wPt, fractionMaxSpeed, False)
+                xyxy = [int(n) for n in xyxy]
+                #img = cv2.putText(img, info, (10,30), font, 1, (255,0,0),0,cv2.LINE_AA)
+                cv2.rectangle(img, xyxy[:2], xyxy[2:], (0,0,255),1)
+                ledService.fadeRGB(ledGroup,'white',0.05)
+
+                # old method
+                #   T = TransEye()
+                #   RotT = T @ RotZ(wP[1]) @ RotY(wP[0]-0.01)
+                #   RotTv = RotT.reshape(-1).tolist()
+                #   motionProxy.getTransforms(effector, frame, RotTv, factionMaxSpeed, axisMask)
+            # write image
+            out.write(img)
+
+        except KeyboardInterrupt:
+            setStiffnesses(s,"Body",0.0)
+            out.release()
+            break
+        
+
+### Development / debugging 
+def extendArm(session, comeback):
+    ## TESTING METHOD ##
+    postureService = get_service(session, 'ALRobotPosture')
+    motionProxy = get_service(session, 'ALMotion')
+    motionProxy.wakeUp()
+
+    names = motionProxy.getBodyNames("LArm")
+    print(names)
+    postureService.goToPosture("Stand",0.5)
+
+    chainName = "LShoulderPitch"
     frame     = FRAME_TORSO
     useSensors = False
     fractionMaxSpeed = 0.2
     axisMask = AXIS_MASK_WZ
     
-    ts = motionProxy.getTransform(chainName, frame, useSensors)
-    ts = Transform(ts)
-    tt = ts @ TransRot([0,0,-np.pi/2,0,0,0])
+    wPt = [0]
 
-    motionProxy.setTransforms(chainName, frame, tt, fractionMaxSpeed, axisMask)
-    waitForTransform(tt, motionProxy, chainName, frame, useSensors)
+    #motionProxy.setAngles(chainName, wPt, fractionMaxSpeed)
+    #waitForAngles(wPt, motionProxy, chainName, useSensors)
+    ##ts = motionProxy.getTransform(chainName, frame, useSensors)
+    #ts = Transform(ts)
+    #tt = ts @ TransRot([0,-np.pi/4,0,0,0,0])
 
+    #print(tt.matrix)
+    #print(tt.vector)
+    #motionProxy.setTransforms(chainName, frame, tt.vector, fractionMaxSpeed, axisMask)
+    #waitForTransform(tt, motionProxy, chainName, frame, useSensors)
+    
 
-### Development / debugging 
 def point(session):
 
-    effectorList = ['LArm']
+    effectorList = ['LShoulderPitch']
     frame = FRAME_TORSO
     useSensorValues = False # should this be false? 
 
@@ -109,57 +205,6 @@ def point(session):
 
     motionProxy.transformInterpolations(effectorList, frame, pathList, axisMask, timeList)
     motionProxy.setStiffnesses("Body", 0.0)
-
-
-def followObjects(session):
-
-    videoService = get_service(session, 'ALVideoDevice')
-    unsubscribeNaoCam(videoService)
-    videoClient = subscribeNaoCam(videoService)
-
-    motionProxy = get_service(session, 'ALMotion')
-    motionProxy.wakeUp()
-
-    frame = FRAME_ROBOT
-    effector = 'Head'
-
-    factionMaxSpeed = 0.8
-    axisMask = AXIS_MASK_WY + AXIS_MASK_WZ
-
-    model = get_objDetection_model('/mnt/c/users/multimaster/P2_yolo_dataset.pt')
-    while True:
-        img,_ = getNaoImage(videoService, videoClient)
-    
-
-        obj, xywhn = predictNaoImage(model, img)
-
-        if obj is not None:
-            x,y = xywhn[0:2]
-
-            print(x,y)
-            print(obj)
-
-            ### ADD FACE AND CHANGE COLOR OF BUTTON WHEN RECOGNIZE
-            ### ALSO CHANGE TO getTransforms 
-
-            # use default camera index unless it is defined when subscribing
-            wP = videoService.getAngularPositionFromImagePosition(0, [x,y])
-
-            T = TransEye()
-            RotT = T @ RotZ(wP[1]) @ RotY(wP[0]-0.01)
-            RotTv = RotT.reshape(-1).tolist()
-
-            # could do something like like while the effector is not in position 
-            # keep sleeping
-            motionProxy.getTransforms(effector, frame, RotTv, factionMaxSpeed, axisMask)
-
-            time.sleep(5)
-        else:
-            print(None)
-        print()
-        
-        #motionProxy.setStiffnesses("Body", 0.0)
-    motionProxy.rest()
 
 def recognizeObjects(session):
     
@@ -234,24 +279,24 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     s = get_session(args)
+    print(s)
 
     if args.behavior == 0:
-        wP = [-0.1, -0.2]
         comeBack = True
-        fractionMaxSpeed = 0.2
-
-        moveHead(s, wP, comeBack, fractionMaxSpeed)
+        wP = [0.3,-0.3]
+        fractionMaxSpeed = 0.1
+        moveHead(s, wP, fractionMaxSpeed, comeBack,)
     elif args.behavior == 1:
-        turnHead(s)
+        followObjects(s)
     elif args.behavior == 2:
-        holdHead(s)
+        extendArm(s, True)
     elif args.behavior == 3:
         followObjects(s)
     elif args.behavior == 4:
         restNao(s)
     elif args.behavior == 5:
         #point(s)
-        setStiffnesses(s, 'Head', 0)
+        setStiffnesses(s, 'Body', 0)
     if args.OFF:
         turnNaoOFF(s)
         

@@ -42,11 +42,12 @@ def get_service(session, service_name):
         ALVideoDevice  -> get images
         ALRobotPosture -> whole body preset translation
         ALmotion -> chain control
-        ALSystem -> turn off robot, etc    
+        ALSystem -> turn off robot, etc   
+        ALLeds -> control robot LEDs 
     """
 
     validServices = ['ALTextToSpeech','ALVideoDevice','ALRobotPosture', 'ALMotion',
-                    'ALSystem']
+                    'ALSystem','ALLeds']
 
     if service_name not in validServices:
         print(f"service : {service_name} is not supported.")

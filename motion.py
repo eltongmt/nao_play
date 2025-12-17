@@ -148,7 +148,7 @@ class Transform:
     def __init__(self, T):
         if isinstance(T, np.ndarray):
             self.matrix = T
-            self.vector = list(self.matrix.reshape(-1))
+            self.vector = self.matrix.reshape(-1).tolist()
         elif isinstance(T, list):
             self.vector = T
             self.matrix = np.array(self.vector).reshape(4,4) 
@@ -157,11 +157,21 @@ class Transform:
         
     def __matmul__(self, B):
         if isinstance(B, Transform):
-            return np.dot(self.matrix, B.matrix)
+            return Transform(np.dot(self.matrix, B.matrix))
         elif isinstance(B, np.ndarray):
-            return np.dot(self.matrix, B)
+            return Transform(np.dot(self.matrix, B))
         else:
             raise Exception(f'matmul is not defined for transform and {type(B)}')
+        
+    def __sub__(self, B):
+        if isinstance(B, Transform):
+            return Transform(self.matrix - B.matrix)
+        elif isinstance(B, np.ndarray):
+            return Transform(self.matrix - B)
+        else:
+            raise Exception(f'minus is not defined for transform and {type(B)}')
+
+
     
 
 def isArraysClose(A, B):
@@ -172,7 +182,6 @@ def isArraysClose(A, B):
     cop_arrays = [0, 0]
     shapes = [0,0]
 
-    for i in range(len(arrays)):
     for i in range(len(arrays)):
         X = arrays[i]
 
@@ -186,50 +195,52 @@ def isArraysClose(A, B):
 
     values = np.allclose(arrays[0], arrays[1], atol=0.01)
     print(arrays)
-    values = np.isclose(arrays[0], arrays[1])
-    trueValues = sum(values)
 
     return values
     
 
-def waitForAngles(A, motionProxy, names, useSensors):
+def waitForAngles(a, motionProxy, names, useSensors):
     '''
     wait for setMotion call to finish (since set is non-blocking)
     '''
-    print(A)
-    prevB = motionProxy.getAngels(names, useSensors)
+    print(f'Target angles: {a}')
+
+    prevB = motionProxy.getAngles(names, useSensors)
+    prevB = np.array(prevB)
     breakCount = 0
 
+    print(f'Current angles: {prevB}')
     while True:
         B = motionProxy.getAngles(names, useSensors)
+        B = np.array(B)
 
-        if isArraysClose(A, B):
-            print(A, B)
-            break
-        time.sleep(0.05)
-
+        if np.allclose(a, B):
+            print(f'Final angle {B}')
+            return True
         # instances where the robot is struck
         # trying to get to a position that is 
         # not possible 
         diffB = B - prevB
         prevB = B
 
-        if diffB == 0:
+        if np.sum(diffB) == 0:
             breakCount += 1
 
-        if breakCount == 4:
-            break
+        if breakCount == 2:
+            return False
+            
+        time.sleep(0.05)
 
 # note need to fix this function its dedundant for testing 
 def waitForTransform(A, motionProxy, chainName, frame, useSensors):
     '''
     wait for setMotion call to finish (since set is non-blocking)
     '''
-    prevB = motionProxy.getTransform(chainName, frame, useSensors)
+    prevB = Transform(motionProxy.getTransform(chainName, frame, useSensors))
     breakCount = 0
 
     while True:
-        B = motionProxy.getTransform(chainName, frame, useSensors)
+        B = Transform(motionProxy.getTransform(chainName, frame, useSensors))
 
         if isArraysClose(A, B):
             break
@@ -241,7 +252,7 @@ def waitForTransform(A, motionProxy, chainName, frame, useSensors):
         diffB = B - prevB
         prevB = B
 
-        if diffB == 0:
+        if np.sum(diffB.matrix) == 0:
             breakCount += 1
 
         if breakCount == 4:

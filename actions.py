@@ -21,11 +21,10 @@ def getNaoImage(videoService, videoClient):
     Get an image data from nao and transform it a 
     numpy array 
     '''
-
-    t0 = time()
+    t0 = time.time()
     # get data from nao 
     naoImage = videoService.getImageRemote(videoClient)
-    t1 = time()
+    t1 = time.time()
 
     # Get the image size and binary array.
     imageWidth = naoImage[0]
@@ -36,7 +35,6 @@ def getNaoImage(videoService, videoClient):
 
     # Create a PIL Image from binary.
     img = Image.frombytes('RGB', (imageWidth, imageHeight), imageStream)
-    
 
     return img, t1 - t0
 
@@ -86,20 +84,19 @@ def predictNaoImage(model, naoImage):
     results = model.predict(naoImage, conf=0.80, verbose=False)
     results = results[0]
     names = results.names
-    boxes = results.boxes.xywhn
+    boxes = results.boxes
     
-    clss = results.boxes.cls
+    clss = boxes.cls
 
     #TO DO: change to return the biggest item if multiple 
     # getBiggestObj
     if clss.numel() > 0:
         obj = names[clss[0].item()]
-        bbox = boxes[0].tolist()
     else:
         obj = None
-        bbox = None
+        boxes = None
 
-    return obj, bbox
+    return obj, boxes
     
 # -- ALMotion -- 
     '''
